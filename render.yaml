@@ -1,0 +1,34 @@
+# IndiaQuant MCP — Render.com deployment
+# Free tier spins down after 15 min idle — use UptimeRobot to ping /health every 5 min
+
+services:
+  - type: web
+    name: indiaquant-mcp
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    autoDeploy: true
+    branch: main
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: LOG_LEVEL
+        value: "INFO"
+      - key: DATABASE_PATH
+        value: "/data/portfolio.db"
+      - key: NEWS_API_KEY
+        sync: false
+      - key: ALPHA_VANTAGE_KEY
+        sync: false
+      - key: MCP_AUTH_TOKEN
+        sync: false
+
+    # SQLite lives here so trades survive restarts
+    disk:
+      name: portfolio-data
+      mountPath: /data
+      sizeGB: 1

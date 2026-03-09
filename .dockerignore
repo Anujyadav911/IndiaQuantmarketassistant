@@ -1,0 +1,22 @@
+# keep secrets, caches and local files out of the image
+.git/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*.db
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.coverage
+htmlcov/
+tests/
+README.md
+*.md
+fly.toml
+render.yaml
+railway.toml
