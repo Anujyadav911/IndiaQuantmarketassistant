@@ -10,6 +10,15 @@ from typing import Any
 import pandas as pd
 import yfinance as yf
 
+# Spoof a browser User-Agent so Yahoo Finance doesn't block cloud server IPs
+yf.utils.USER_AGENT_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    )
+}
+
 from src.config import (
     HISTORICAL_CACHE_TTL,
     INDEX_MAP,
