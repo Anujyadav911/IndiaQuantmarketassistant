@@ -104,43 +104,35 @@ def get_live_price(symbol: str) -> dict:
         return cached
 
     logger.info("Fetching live price for %s", ticker_str)
-    tkr = yf.Ticker(ticker_str)
-    info = tkr.info  # single-call dict from Yahoo Finance
+    tkr  = yf.Ticker(ticker_str)
+    fi   = tkr.fast_info          # lightweight endpoint — no rate-limit issues
 
-    # Yahoo Finance may return different field names depending on asset type.
-    price = (
-        info.get("currentPrice")
-        or info.get("regularMarketPrice")
-        or info.get("ask")
-        or info.get("bid")
-        or 0.0
-    )
+    price      = float(fi.last_price      or fi.regular_market_price or 0.0)
+    prev_close = float(fi.previous_close  or price)
     if price == 0.0:
-        # Fallback: fetch 1-day bar
         hist = tkr.history(period="1d", interval="1m")
         if not hist.empty:
             price = float(hist["Close"].iloc[-1])
 
-    prev_close: float = info.get("previousClose") or info.get("regularMarketPreviousClose") or price
     change     = round(price - prev_close, 4)
     change_pct = round((change / prev_close * 100) if prev_close else 0.0, 4)
 
     result = {
         "symbol":     symbol.upper(),
         "ticker":     ticker_str,
-        "price":      round(float(price), 2),
-        "open":       round(float(info.get("open") or info.get("regularMarketOpen") or price), 2),
-        "high":       round(float(info.get("dayHigh") or info.get("regularMarketDayHigh") or price), 2),
-        "low":        round(float(info.get("dayLow") or info.get("regularMarketDayLow") or price), 2),
-        "prev_close": round(float(prev_close), 2),
+        "price":      round(price, 2),
+        "open":       round(float(fi.open  or price), 2),
+        "high":       round(float(fi.day_high  or price), 2),
+        "low":        round(float(fi.day_low   or price), 2),
+        "prev_close": round(prev_close, 2),
         "change":     change,
         "change_pct": change_pct,
-        "volume":     int(info.get("volume") or info.get("regularMarketVolume") or 0),
-        "market_cap": info.get("marketCap"),
-        "52w_high":   info.get("fiftyTwoWeekHigh"),
-        "52w_low":    info.get("fiftyTwoWeekLow"),
-        "currency":   info.get("currency", "INR"),
-        "exchange":   info.get("exchange", "NSE"),
+        "volume":     int(fi.shares or 0),
+        "market_cap": getattr(fi, "market_cap", None),
+        "52w_high":   getattr(fi, "year_high", None),
+        "52w_low":    getattr(fi, "year_low",  None),
+        "currency":   getattr(fi, "currency", "INR"),
+        "exchange":   getattr(fi, "exchange",  "NSE"),
         "timestamp":  pd.Timestamp.now(tz="Asia/Kolkata").isoformat(),
     }
 
